@@ -50,7 +50,7 @@ If you prefer to use a remote server instead of a local VM, follow these steps t
 1. **SSH into your remote server**
 
    ```bash
-   ssh root@<SERVER-IP>
+   ssh root@<server-ip>
    ```
 
 2. **Install K3s**
@@ -71,13 +71,11 @@ If you prefer to use a remote server instead of a local VM, follow these steps t
       --set additionalArguments[0]="--certificatesresolvers.default.acme.email=<EMAIL-ADDRESS>" \
       --set additionalArguments[1]="--certificatesresolvers.default.acme.storage=/data/acme.json" \
       --set additionalArguments[2]="--certificatesresolvers.default.acme.httpchallenge.entrypoint=web" \
-      --set ports.web.exposedPort=80 \
-      --set ports.websecure.exposedPort=443 \
-      --set ports.web.hostPort=80 \
-      --set ports.websecure.hostPort=443
+      --set ports.web.exposedport=80 \
+      --set ports.websecure.exposedport=443 \
+      --set ports.web.hostport=80 \
+      --set ports.websecure.hostport=443
    ```
-
-   You should see your server listed as a node in "Ready" status.
 
 #### 2. Configure Local Access
 
@@ -85,14 +83,13 @@ If you prefer to use a remote server instead of a local VM, follow these steps t
 
    ```bash
    # Create SSH tunnel in background (keeps running)
-   ssh -f -N -L 6443:localhost:6443 root@<SERVER-IP>
+   ssh -f -N -L 6443:localhost:6443 root@<server-ip>
    ```
 
 2. **Copy K3s config to your local machine**
 
    ```bash
-   # Copy the kubeconfig file
-   scp root@<SERVER-IP>:/etc/rancher/k3s/k3s.yaml ~/.kube/server-k3s.yaml
+   scp root@<server-ip>:/etc/rancher/k3s/k3s.yaml ~/.kube/server-k3s.yaml
    ```
 
 #### 3. Test Local Connection
@@ -142,7 +139,7 @@ kubectl get nodes
 3. **Deploy to Kubernetes**
 
    ```bash
-   kubectl apply -f kube/server-go.yaml
+   kubectl apply -f kube/go/
    ```
 
 4. **Verify deployment**
@@ -154,53 +151,46 @@ kubectl get nodes
    kubectl get services
    ```
 
-5. **Access the application**
-   Visit `http://<IP-ADDRESS>:<PORT>` to see the "Hello from Go server!" message.
-
 ### ArgoCD Setup 🚀
 
 1. Helm install
 
 ```bash
    helm repo add argo https://argoproj.github.io/argo-helm
-   helm repo updatekubectl create namespace argocd
 ```
 
-1. **Install ArgoCD**
+2. **Install ArgoCD**
 
    ```bash
-   # Create namespace
-   kubectl create namespace argocd
+   helm install argocd argo/argo-cd --namespace argocd --create-namespace
 
-   # Install
-   helm install argocd argo/argo-cd -n argocd
+   # Let traefik handle ingress
+   helm upgrade argocd argo/argo-cd -n argocd   --set server.extraArgs[0]=--insecure
+
+   # Apply manifest
+   kubectl apply -f kube/argo
    ```
 
-2. **Verify ArgoCD installation**
+3. **Verify ArgoCD installation**
 
    ```bash
    # Get initial password
    kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
-
-   # Port forward to localhost
-   kubectl port-forward service/argocd-server -n argocd 8080:443
    ```
 
-   Visit `http://localhost:8080` to access ArgoCD dashboard.
+   Visit `https://<domain-name>` to access ArgoCD dashboard.
 
    - Username: `admin`
    - Password: <initial-password>
 
-   **Note:** You may need to accept the security warning due to the self-signed certificate.
-
-3. **Create ArgoCD Application**
+4. **Create ArgoCD Application**
 
    **Via ArgoCD UI:**
 
    - Click "**+ NEW APP**"
    - **Application Name**: `go-server-app`
    - **Repository URL**: `<repo-url>`
-   - **Path**: `./kube`
+   - **Path**: `./kube/go`
    - **Destination**: `https://kubernetes.default.svc` / `default` namespace
 
 ### 🖥️ Local VM
@@ -246,7 +236,7 @@ kubectl get nodes
    clusters:
      - cluster:
          # certificate-authority-data: LS0tL...    ←❌ Remove this line
-         server: https://<VM-IP>:6443      ←✅ Replace with your VM IP
+         server: https://<vm-ip>:6443      ←✅ Replace with your VM IP
          insecure-skip-tls-verify: true            ←✅ Add this line
    ```
 

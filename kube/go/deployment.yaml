@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: go-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: go-server
+  template:
+    metadata:
+      labels:
+        app: go-server
+    spec:
+      containers:
+        - name: go-server
+          image: squishmeist/go-server:latest
+          ports:
+            - containerPort: 8080
