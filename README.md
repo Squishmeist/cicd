@@ -26,7 +26,7 @@ Make sure you have the following tools installed:
 
 - **Docker** ([Install Guide](https://docs.docker.com/get-docker/)) - Container runtime
 - **kubectl** ([Install Guide](https://kubernetes.io/docs/tasks/tools/)) - Kubernetes CLI
-- **Multipass** ([Install Guide](https://multipass.run/install)) - Ubuntu VM manager for Linux/macOS/Windows
+- **Multipass** ([Install Guide](https://multipass.run/install)) - Optional Ubuntu VM manager for Linux/macOS/Windows
 - **ArgoCD** - GitOps continuous delivery tool (installed via Kubernetes)
 
 ## 📁 Project Structure
@@ -41,60 +41,89 @@ Make sure you have the following tools installed:
 
 ## ⚡ Quick Start
 
-### 🖥️ VM & K3s Setup
+### 🌐 Remote VM Setup (Alternative)
 
-1. **Install Multipass** (if not already installed)
+If you prefer to use a remote server instead of a local VM, follow these steps to set up K3s on a remote Ubuntu server.
 
-   - Visit [multipass.run](https://multipass.run/install) for installation instructions
+#### 1. Install K3s on Remote Server
 
-2. **Create Ubuntu VM**
+1. **SSH into your remote server**
 
    ```bash
-   multipass launch --name k3s-vm --mem 2G --disk 10G --cpus 2 20.04
+   ssh root@<SERVER-IP>
    ```
 
-3. **Install K3s inside the VM**
+2. **Install K3s**
 
    ```bash
-   multipass shell k3s-vm
+   # Install K3s with default settings
    curl -sfL https://get.k3s.io | sh -
-   sudo cp /etc/rancher/k3s/k3s.yaml /home/ubuntu/k3s.yaml
-   sudo chown ubuntu:ubuntu /home/ubuntu/k3s.yaml
-   exit
-   ```
 
-4. **Get VM IP address**
-
-   ```bash
-   multipass info k3s-vm
-   ```
-
-   Note down the IP address for the next steps.
-
-5. **Transfer kubeconfig to your local machine**
-
-   ```bash
-   multipass transfer k3s-vm:/home/ubuntu/k3s.yaml ~/.kube/config
-   ```
-
-6. **Edit kubeconfig for remote access**
-   Open `~/.kube/config` and modify the cluster configuration:
-
-   ```yaml
-   clusters:
-     - cluster:
-         # certificate-authority-data: LS0tL...    ←❌ Remove this line
-         server: https://<VM-IP-ADDRESS>:6443      ←✅ Replace with your VM IP
-         insecure-skip-tls-verify: true            ←✅ Add this line
-   ```
-
-7. **Verify connection**
-   ```bash
+   # Verify installation
    kubectl get nodes
-   ```
-   You should see your K3s node listed as "Ready".
 
-### 1️⃣ Go Server Deployment 🌐
+   # Ingress controller
+   helm upgrade --install traefik traefik/traefik \
+      --namespace kube-system \
+      --create-namespace \
+      --set ingressClass.enabled=true \
+      --set service.type=ClusterIP \
+      --set additionalArguments[0]="--certificatesresolvers.default.acme.email=<EMAIL-ADDRESS>" \
+      --set additionalArguments[1]="--certificatesresolvers.default.acme.storage=/data/acme.json" \
+      --set additionalArguments[2]="--certificatesresolvers.default.acme.httpchallenge.entrypoint=web" \
+      --set ports.web.exposedPort=80 \
+      --set ports.websecure.exposedPort=443 \
+      --set ports.web.hostPort=80 \
+      --set ports.websecure.hostPort=443
+   ```
+
+   You should see your server listed as a node in "Ready" status.
+
+#### 2. Configure Local Access
+
+1. **Set up SSH tunnel for secure access**
+
+   ```bash
+   # Create SSH tunnel in background (keeps running)
+   ssh -f -N -L 6443:localhost:6443 root@<SERVER-IP>
+   ```
+
+2. **Copy K3s config to your local machine**
+
+   ```bash
+   # Copy the kubeconfig file
+   scp root@<SERVER-IP>:/etc/rancher/k3s/k3s.yaml ~/.kube/server-k3s.yaml
+   ```
+
+#### 3. Test Local Connection
+
+Choose one of the following methods to use kubectl locally:
+
+**Option A: Set as default kubeconfig**
+
+```bash
+# Backup existing config (if any)
+cp ~/.kube/config ~/.kube/config.backup 2>/dev/null || true
+
+# Set remote config as default
+cp ~/.kube/server-k3s.yaml ~/.kube/config
+
+# Test connection
+kubectl get nodes
+```
+
+**Option B: Use specific kubeconfig file**
+
+```bash
+# Test with specific config file
+KUBECONFIG=~/.kube/server-k3s.yaml kubectl get nodes
+
+# Or export for current session
+export KUBECONFIG=~/.kube/server-k3s.yaml
+kubectl get nodes
+```
+
+### Go Server Deployment 🌐
 
 1. **Clone and navigate to the repository**
 
@@ -123,17 +152,12 @@ Make sure you have the following tools installed:
    kubectl get deployments
    kubectl get pods
    kubectl get services
-
-   # Get the NodePort for external access
-   kubectl get svc go-server -o wide
    ```
 
 5. **Access the application**
-   Visit `http://<VM-IP-ADDRESS>:<nodeport>` to see the "Hello from Go server!" message.
+   Visit `http://<IP-ADDRESS>:<PORT>` to see the "Hello from Go server!" message.
 
-   The NodePort will be displayed in the previous command output.
-
-### 2️⃣ ArgoCD Setup 🚀
+### ArgoCD Setup 🚀
 
 1. Helm install
 
@@ -179,7 +203,60 @@ Make sure you have the following tools installed:
    - **Path**: `./kube`
    - **Destination**: `https://kubernetes.default.svc` / `default` namespace
 
-### 3️⃣ Local Git Repository Setup (Optional) 🌳
+### 🖥️ Local VM
+
+1. **Install Multipass** (if not already installed)
+
+   - Visit [multipass.run](https://multipass.run/install) for installation instructions
+
+2. **Create Ubuntu VM**
+
+   ```bash
+   multipass launch --name k3s-vm --mem 2G --disk 10G --cpus 2 20.04
+   ```
+
+3. **Install K3s inside the VM**
+
+   ```bash
+   multipass shell k3s-vm
+   curl -sfL https://get.k3s.io | sh -
+   sudo cp /etc/rancher/k3s/k3s.yaml /home/ubuntu/k3s.yaml
+   sudo chown ubuntu:ubuntu /home/ubuntu/k3s.yaml
+   exit
+   ```
+
+4. **Get VM IP address**
+
+   ```bash
+   multipass info k3s-vm
+   ```
+
+   Note down the IP address for the next steps.
+
+5. **Transfer kubeconfig to your local machine**
+
+   ```bash
+   multipass transfer k3s-vm:/home/ubuntu/k3s.yaml ~/.kube/config
+   ```
+
+6. **Edit kubeconfig for remote access**
+   Open `~/.kube/config` and modify the cluster configuration:
+
+   ```yaml
+   clusters:
+     - cluster:
+         # certificate-authority-data: LS0tL...    ←❌ Remove this line
+         server: https://<VM-IP>:6443      ←✅ Replace with your VM IP
+         insecure-skip-tls-verify: true            ←✅ Add this line
+   ```
+
+7. **Verify connection**
+   ```bash
+   kubectl get nodes
+   ```
+   You should see your K3s node listed as "Ready".
+
+### Local Git Repository Setup (Optional) 🌳
 
 For development without pushing to remote repositories:
 
