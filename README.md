@@ -50,31 +50,10 @@ If you prefer to use a remote server instead of a local VM, follow these steps t
 1. **SSH into your remote server**
 
    ```bash
-   ssh root@<server-ip>
-   ```
-
-2. **Install K3s**
-
-   ```bash
-   # Install K3s with default settings
-   curl -sfL https://get.k3s.io | sh -
-
-   # Verify installation
-   kubectl get nodes
-
-   # Ingress controller
-   helm upgrade --install traefik traefik/traefik \
-      --namespace kube-system \
-      --create-namespace \
-      --set ingressClass.enabled=true \
-      --set service.type=ClusterIP \
-      --set additionalArguments[0]="--certificatesresolvers.default.acme.email=<EMAIL-ADDRESS>" \
-      --set additionalArguments[1]="--certificatesresolvers.default.acme.storage=/data/acme.json" \
-      --set additionalArguments[2]="--certificatesresolvers.default.acme.httpchallenge.entrypoint=web" \
-      --set ports.web.exposedport=80 \
-      --set ports.websecure.exposedport=443 \
-      --set ports.web.hostport=80 \
-      --set ports.websecure.hostport=443
+   # Copy
+   scp ./infrastructure/k3s/setup-k3s.sh root@<server-ip>:~/
+   # Execute
+   ssh root@<server-ip> "~/setup-k3s.sh"
    ```
 
 #### 2. Configure Local Access
@@ -139,7 +118,7 @@ kubectl get nodes
 3. **Deploy to Kubernetes**
 
    ```bash
-   kubectl apply -f kube/go/
+   kubectl apply -f deployment/go
    ```
 
 4. **Verify deployment**
@@ -168,7 +147,7 @@ kubectl get nodes
    helm upgrade argocd argo/argo-cd -n argocd   --set server.extraArgs[0]=--insecure
 
    # Apply manifest
-   kubectl apply -f kube/argo
+   kubectl apply -f deployment/argo
    ```
 
 3. **Verify ArgoCD installation**
@@ -190,7 +169,7 @@ kubectl get nodes
    - Click "**+ NEW APP**"
    - **Application Name**: `go-server-app`
    - **Repository URL**: `<repo-url>`
-   - **Path**: `./kube/go`
+   - **Path**: `./deployment/go`
    - **Destination**: `https://kubernetes.default.svc` / `default` namespace
 
 ### 🖥️ Local VM
