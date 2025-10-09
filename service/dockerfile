@@ -1,0 +1,27 @@
+# Build stage
+FROM golang:1.25 AS builder
+
+WORKDIR /app
+
+# Copy module definition and download dependencies
+COPY go-server/go.mod go-server/go.sum ./
+RUN go mod download
+
+# Copy application source
+COPY go-server/ ./
+
+# Build statically linked binary for Linux
+ENV CGO_ENABLED=0 GOOS=linux
+RUN go build -o /go-server ./cmd/main.go
+
+# Run stage
+FROM alpine:latest
+
+RUN apk add --no-cache ca-certificates
+WORKDIR /app
+
+COPY --from=builder /go-server ./go-server
+
+EXPOSE 8080
+
+CMD ["./go-server"]
