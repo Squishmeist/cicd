@@ -9,6 +9,9 @@ import (
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Root endpoint
+	// (GET /)
+	GetRoot(ctx echo.Context) error
 	// Health check
 	// (GET /health)
 	GetHealth(ctx echo.Context) error
@@ -17,6 +20,15 @@ type ServerInterface interface {
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
+}
+
+// GetRoot converts echo context to params.
+func (w *ServerInterfaceWrapper) GetRoot(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetRoot(ctx)
+	return err
 }
 
 // GetHealth converts echo context to params.
@@ -56,6 +68,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
+	router.GET(baseURL+"/", wrapper.GetRoot)
 	router.GET(baseURL+"/health", wrapper.GetHealth)
 
 }

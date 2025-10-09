@@ -7,3 +7,8 @@ package api
 type HealthResponse struct {
 	Status string `json:"status"`
 }
+
+// RootResponse defines model for RootResponse.
+type RootResponse struct {
+	Message string `json:"message"`
+}

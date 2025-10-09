@@ -13,6 +13,13 @@ type Handler struct {
 	Redis *redis.Client
 }
 
+func (h *Handler) GetRoot(ctx echo.Context) error {
+	fmt.Println("Handling GetRoot request")
+	return ctx.JSON(http.StatusOK, api.RootResponse{
+		Message: "Hello from Go server!",
+	})
+}
+
 func (h *Handler) GetHealth(ctx echo.Context) error {
 	fmt.Println("Handling GetHealth request")
 	reqCtx := ctx.Request().Context()

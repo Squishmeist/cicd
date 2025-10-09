@@ -13,7 +13,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/redis/go-redis/v9"
 	goServer "github.com/squishmeist/cicd"
-	api "github.com/squishmeist/cicd/api/gen"
+	apibase "github.com/squishmeist/cicd/api"
+	apigen "github.com/squishmeist/cicd/api/gen"
 )
 
 func main() {
@@ -33,7 +34,16 @@ func main() {
 	handler := &goServer.Handler{
 		Redis: rdb,
 	}
-	api.RegisterHandlers(e, handler)
+	apigen.RegisterHandlers(e, handler)
+
+	e.GET("/openapi.yaml", func(c echo.Context) error {
+		return c.Blob(http.StatusOK, "application/yaml", apibase.OpenAPISpec())
+	})
+	docsHandler := func(c echo.Context) error {
+		return c.HTMLBlob(http.StatusOK, apibase.SwaggerHTML("/openapi.yaml"))
+	}
+	e.GET("/docs", docsHandler)
+	e.GET("/docs/*", docsHandler)
 
 	fmt.Println("Starting server on :8080")
 	startServer(e)
