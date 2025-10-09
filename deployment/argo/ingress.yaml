@@ -3,11 +3,11 @@ kind: Ingress
 metadata:
   name: argocd-server-ingress
   namespace: argocd
-  annotations:
-    kubernetes.io/ingress.class: "traefik"
-    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
-    traefik.ingress.kubernetes.io/router.tls.certresolver: default
 spec:
+  tls:
+    - hosts:
+        - argocd.squishmeist.com
+      secretName: argocd-server-tls
   rules:
     - host: argocd.squishmeist.com
       http:
@@ -19,6 +19,3 @@ spec:
                 name: argocd-server
                 port:
                   number: 80
-  tls:
-    - hosts:
-        - argocd.squishmeist.com

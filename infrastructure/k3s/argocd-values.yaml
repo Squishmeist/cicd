@@ -1,0 +1,19 @@
+# Argo CD Helm Values
+# TLS termination handled by Traefik/Cert-Manager, so run server in HTTP-only mode.
+
+global:
+  domain: argocd.squishmeist.com
+
+server:
+  extraArgs:
+    - --insecure
+  service:
+    type: ClusterIP
+    servicePortHttp: 80
+    servicePortHttps: 443
+  ingress:
+    enabled: false
+
+configs:
+  params:
+    server.insecure: true

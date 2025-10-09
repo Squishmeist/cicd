@@ -51,9 +51,10 @@ If you prefer to use a remote server instead of a local VM, follow these steps t
 
    ```bash
    # Copy
-   scp ./infrastructure/k3s/setup-k3s.sh root@<server-ip>:~/
+   scp -r infrastructure/k3s root@<server-ip>:~/k3s-setup
+   scp infrastructure/.env root@<server-ip>:~/k3s-setup
    # Execute
-   ssh root@<server-ip> "~/setup-k3s.sh"
+   ssh root@<server-ip> "~/k3s-setup/setup-k3s.sh"
    ```
 
 #### 2. Configure Local Access
@@ -101,27 +102,20 @@ kubectl get nodes
 
 ### Go Server Deployment 🌐
 
-1. **Clone and navigate to the repository**
-
-   ```bash
-   git clone <repository-url>
-   cd cicd
-   ```
-
-2. **Build and push Docker image** (optional - for your own registry)
+1. **Build and push Docker image** (optional - for your own registry)
 
    ```bash
    docker build -t <dockerhub-username>/go-server:latest .
    docker push <dockerhub-username>/go-server:latest
    ```
 
-3. **Deploy to Kubernetes**
+2. **Deploy to Kubernetes**
 
    ```bash
    kubectl apply -f deployment/go
    ```
 
-4. **Verify deployment**
+3. **Verify deployment**
 
    ```bash
    # Check deployment status
@@ -132,25 +126,7 @@ kubectl get nodes
 
 ### ArgoCD Setup 🚀
 
-1. Helm install
-
-```bash
-   helm repo add argo https://argoproj.github.io/argo-helm
-```
-
-2. **Install ArgoCD**
-
-   ```bash
-   helm install argocd argo/argo-cd --namespace argocd --create-namespace
-
-   # Let traefik handle ingress
-   helm upgrade argocd argo/argo-cd -n argocd   --set server.extraArgs[0]=--insecure
-
-   # Apply manifest
-   kubectl apply -f deployment/argo
-   ```
-
-3. **Verify ArgoCD installation**
+1. **Verify ArgoCD installation**
 
    ```bash
    # Get initial password
@@ -162,7 +138,7 @@ kubectl get nodes
    - Username: `admin`
    - Password: <initial-password>
 
-4. **Create ArgoCD Application**
+2. **Create ArgoCD Application**
 
    **Via ArgoCD UI:**
 

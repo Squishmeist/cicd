@@ -1,0 +1,33 @@
+# Cert-Manager Helm Values
+# This configuration sets up cert-manager for automatic SSL certificate management
+
+crds:
+  enabled: true
+
+# Global configuration
+global:
+  leaderElection:
+    namespace: cert-manager
+
+# Controller configuration
+replicaCount: 1
+
+# Resource requests/limits
+resources:
+  requests:
+    cpu: 10m
+    memory: 32Mi
+  limits:
+    cpu: 100m
+    memory: 128Mi
+
+# CA Injector configuration
+cainjector:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi

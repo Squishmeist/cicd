@@ -3,11 +3,11 @@ kind: Ingress
 metadata:
   name: go-server-ingress
   namespace: default
-  annotations:
-    kubernetes.io/ingress.class: "traefik"
-    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
-    traefik.ingress.kubernetes.io/router.tls.certresolver: default
 spec:
+  tls:
+    - hosts:
+        - go.squishmeist.com
+      secretName: go-server-tls
   rules:
     - host: go.squishmeist.com
       http:
@@ -19,6 +19,3 @@ spec:
                 name: go-server-service
                 port:
                   number: 80
-  tls:
-    - hosts:
-        - go.squishmeist.com
