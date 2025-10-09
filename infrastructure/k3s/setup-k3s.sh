@@ -27,7 +27,7 @@ if [ -z "$EMAIL_ADDRESS" ]; then
   exit 1
 fi
 
-if [ ! -f "$SCRIPT_DIR/traefik-values.yaml" ] || [ ! -f "$SCRIPT_DIR/cert-manager-values.yaml" ] || [ ! -f "$SCRIPT_DIR/cluster-issuer.yaml" ] || [ ! -f "$SCRIPT_DIR/argocd-values.yaml" ]; then
+if [ ! -f "$SCRIPT_DIR/traefik-values.yaml" ] || [ ! -f "$SCRIPT_DIR/cert-manager-values.yaml" ] || [ ! -f "$SCRIPT_DIR/cluster-issuer.yaml" ] || [ ! -f "$SCRIPT_DIR/argocd-values.yaml" ] || [ ! -f "$SCRIPT_DIR/redis-values.yaml" ]; then
   echo "❌ Required manifest files not found in $SCRIPT_DIR."
   exit 1
 fi
@@ -69,6 +69,7 @@ echo "🌐 Adding Helm repositories..."
 helm repo add traefik https://helm.traefik.io/traefik
 helm repo add jetstack https://charts.jetstack.io
 helm repo add argo https://argoproj.github.io/argo-helm
+helm repo add bitnami https://charts.bitnami.com/bitnami
 helm repo update
 
 echo ""
@@ -101,8 +102,19 @@ echo "⏳ Waiting for Argo CD server to be ready..."
 kubectl wait --for=condition=available deployment/argocd-server -n argocd --timeout=180s
 
 echo ""
+echo "🚀 Installing Redis..."
+helm upgrade --install redis bitnami/redis \
+  --namespace redis \
+  --create-namespace \
+  --values "$SCRIPT_DIR/redis-values.yaml"
+
+echo ""
+echo "⏳ Waiting for Redis master pod to be ready..."
+kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=redis -n redis --timeout=180s
+
+echo ""
 echo "🏷️ Applying ClusterIssuer..."
 sed "s/\${EMAIL_ADDRESS}/$EMAIL_ADDRESS/g" "$SCRIPT_DIR/cluster-issuer.yaml" | kubectl apply -f -
 
 echo ""
-echo "✅ Traefik, cert-manager, and Argo CD installation completed!"
+echo "✅ Traefik, cert-manager, Argo CD, and Redis installation completed!"

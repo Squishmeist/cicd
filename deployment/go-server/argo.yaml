@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://github.com/squishmeist/cicd.git
     targetRevision: main
-    path: deployment/go
+    path: deployment/go-server
   destination:
     server: https://kubernetes.default.svc
     namespace: default

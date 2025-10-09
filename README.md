@@ -112,7 +112,7 @@ kubectl get nodes
 2. **Deploy to Kubernetes**
 
    ```bash
-   kubectl apply -f deployment/go
+   kubectl apply -f deployment/go-server
    ```
 
 3. **Verify deployment**
@@ -145,7 +145,7 @@ kubectl get nodes
    - Click "**+ NEW APP**"
    - **Application Name**: `go-server-app`
    - **Repository URL**: `<repo-url>`
-   - **Path**: `./deployment/go`
+   - **Path**: `./deployment/go-server`
    - **Destination**: `https://kubernetes.default.svc` / `default` namespace
 
 ### 🖥️ Local VM

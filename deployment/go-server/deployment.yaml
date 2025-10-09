@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: go-server
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: go-server
+  template:
+    metadata:
+      labels:
+        app: go-server
+    spec:
+      containers:
+        - name: go-server
+          image: squishmeist/go-server:latest
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/conf/config.yaml
+              subPath: config.yaml
+            - name: server-certs
+              mountPath: /etc/mtls/server
+              readOnly: true
+
+      volumes:
+        - name: config-volume
+          configMap:
+            name: go-server-config
+            items:
+              - key: config.yaml
+                path: config.yaml
+        - name: server-certs
+          secret:
+            secretName: go-server-tls

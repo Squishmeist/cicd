@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: go-server-config
+  namespace: default
+data:
+  config.yaml: |
+    redis:
+      addr: redis-master.redis.svc.cluster.local:6379
+      password: ""
+      db: 0

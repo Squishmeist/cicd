@@ -1,0 +1,13 @@
+# Redis Helm Values
+# Deploy a single Redis instance for internal cluster use.
+
+architecture: standalone
+
+auth:
+  enabled: false
+
+master:
+  persistence:
+    enabled: false
+  service:
+    type: ClusterIP
