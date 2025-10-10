@@ -1,9 +1,0 @@
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: server-cert
-spec:
-  commonName: blink.squishmeist.com
-  dnsNames:
-    - blink.squishmeist.com
-  secretName: blink-server-tls

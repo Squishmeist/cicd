@@ -1,0 +1,111 @@
+nameOverride: ""
+fullnameOverride: ""
+
+replicaCount: 1
+
+image:
+  repository: squishmeist/server
+  tag: latest
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+podAnnotations: {}
+podLabels: {}
+
+serviceAccount:
+  create: false
+  name: ""
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+service:
+  name: ""
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+ingress:
+  enabled: true
+  className: ""
+  annotations: {}
+  hosts:
+    - host: app.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: server-tls
+      hosts:
+        - app.example.com
+
+certificate:
+  enabled: true
+  name: ""
+  namespace: default
+  secretName: ""
+  duration: 2160h
+  renewBefore: 360h
+  commonName: app.example.com
+  dnsNames:
+    - app.example.com
+  issuerRef:
+    name: squishmeist-ca
+    kind: ClusterIssuer
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  usages:
+    - server auth
+
+configMap:
+  enabled: true
+  name: ""
+  data:
+    config.yaml: |
+      redis:
+        addr: redis-master.redis.svc.cluster.local:6379
+        password: tWDlVCLsV5%
+        db: 0
+
+app:
+  label: server
+
+container:
+  name: server
+  port: 8080
+  configMountPath: /etc/conf/config.yaml
+  configSubPath: config.yaml
+  certsMountPath: /etc/mtls/server
+  resources: {}
+
+secret:
+  enabled: true
+  name: ""
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+networkPolicy:
+  enabled: true
+  allowSameNamespaceIngress: true
+  allowedIngressNamespaces:
+    - kube-system
+  allowDnsEgress: true
+  allowInternetEgress:
+    - 80
+    - 443
+  allowNtpEgress: true
+  extraIngressRules: []
+  extraEgressRules: []

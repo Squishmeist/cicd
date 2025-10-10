@@ -1,0 +1,24 @@
+fullnameOverride: blink-server
+
+image:
+  repository: squishmeist/blink-server
+  tag: latest
+
+app:
+  label: blink-server
+
+ingress:
+  hosts:
+    - host: blink.squishmeist.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: blink-server-tls
+      hosts:
+        - blink.squishmeist.com
+
+certificate:
+  commonName: blink.squishmeist.com
+  dnsNames:
+    - blink.squishmeist.com

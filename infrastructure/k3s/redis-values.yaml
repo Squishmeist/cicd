@@ -4,10 +4,15 @@
 architecture: standalone
 
 auth:
-  enabled: false
+  enabled: true
+  password: ""
+  existingSecret: ""
+  usePasswordFiles: true
 
 master:
   persistence:
-    enabled: false
+    enabled: true
+    size: 1Gi
+    storageClass: ""
   service:
     type: ClusterIP

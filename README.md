@@ -41,50 +41,30 @@ Make sure you have the following tools installed:
 
 ## ⚡ Quick Start
 
-### 🌐 Remote VM Setup (Alternative)
+### 🌐 Remote VM Setup
 
-If you prefer to use a remote server instead of a local VM, follow these steps to set up K3s on a remote Ubuntu server.
-
-#### 1. Install K3s on Remote Server
+#### 1.Install K3s on Remote Server
 
 1. **SSH into your remote server**
 
    ```bash
    # Copy
-   scp -r infrastructure/k3s root@<server-ip>:~/k3s-setup
-   scp infrastructure/.env root@<server-ip>:~/k3s-setup
+   ssh root@<server-ip> 'mkdir -p ~/k3s-setup' rsync -av infrastructure/k3s/ infrastructure/.env root@<server-ip>:~/k3s-setup/
    # Execute
    ssh root@<server-ip> "~/k3s-setup/setup-k3s.sh"
    ```
 
 #### 2. Configure Local Access
 
-1. **Set Up SSH Key**
+1. **Set Up SSH Key (optional)**
 
-   To enable passwordless SSH access, follow these steps:
-
-   **Option 1: Use `ssh-copy-id`**
+   The setup script already installs the public key you provided in `.env`. If you need to add additional keys later, follow these steps:
 
    ```bash
    ssh-copy-id -i ~/.ssh/id_ed25519.pub root@<server-ip>
    ```
 
    This command automatically appends your public key to the `~/.ssh/authorized_keys` file on the remote server.
-
-   **Option 2: Manually Copy the Public Key**
-
-   ```bash
-   # Display your public SSH key
-   cat ~/.ssh/id_ed25519.pub
-
-   # Connect to the remote server
-   ssh root@<server-ip>
-
-   # Open the authorized_keys file on the server
-   nano ~/.ssh/authorized_keys
-
-   # Paste the public key into the file, save, and exit
-   ```
 
 2. **Copy K3s config to your local machine**
 
@@ -136,112 +116,45 @@ kubectl get nodes
    docker push <dockerhub-username>/go-server:latest
    ```
 
-2. **Deploy to Kubernetes**
+2. **Deploy to Kubernetes with Helm**
 
    ```bash
-   kubectl apply -k deployment/go-server
+   helm template go-server deployment/helm/server \
+   --values deployment/helm/server/values-go-server.yaml |
+   ssh root@<server-ip> \
+   "kubectl --kubeconfig /etc/rancher/k3s/k3s.yaml apply -f -"
+   kubectl apply -f deployment/go-server
    ```
 
-3. **Verify deployment**
+### 🔑 Redis
+
+Redis now runs with authentication and persistence enabled. If you didn’t supply an existing secret, Helm generated one during `setup-k3s.sh`. Retrieve it with:
+
+```bash
+kubectl get secret redis -n redis -o jsonpath='{.data.redis-password}' | base64 -d
+```
+
+Store the password in a secrets manager and reference it from your application configuration or create your own secret and re-run `helm upgrade`.
+
+### ArgoCD 🚀
+
+1. **Apply configuration**
+
+   Apply the manifests stored in the repo:
 
    ```bash
-   # Check deployment status
-   kubectl get deployments
-   kubectl get pods
-   kubectl get services
-   ```
-
-### ArgoCD Setup 🚀
-
-1. **Verify ArgoCD installation**
-
-   ```bash
-   # Apply configuration
    kubectl apply -f deployment/argo
+   ```
 
-   # Get initial password
+2. **Retrieve the initial admin password**
+
+   The initial admin password is stored in a Kubernetes secret. Retrieve it with:
+
+   ```bash
    kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
    ```
 
-   Visit `https://<domain-name>` to access ArgoCD dashboard.
-
    - Username: `admin`
-   - Password: <initial-password>
+   - Password: (the value returned by the command above)
 
-2. **Create ArgoCD Application**
-
-   **Via ArgoCD UI:**
-
-   - Click "**+ NEW APP**"
-   - **Application Name**: `go-server-app`
-   - **Repository URL**: `<repo-url>`
-   - **Path**: `./deployment/go-server`
-   - **Destination**: `https://kubernetes.default.svc` / `default` namespace
-
-### 🖥️ Local VM (Optional)
-
-1. **Install Multipass** (if not already installed)
-
-   - Visit [multipass.run](https://multipass.run/install) for installation instructions
-
-2. **Create Ubuntu VM**
-
-   ```bash
-   multipass launch --name k3s-vm --mem 2G --disk 10G --cpus 2 20.04
-   ```
-
-3. **Install K3s inside the VM**
-
-   ```bash
-   multipass shell k3s-vm
-   curl -sfL https://get.k3s.io | sh -
-   sudo cp /etc/rancher/k3s/k3s.yaml /home/ubuntu/k3s.yaml
-   sudo chown ubuntu:ubuntu /home/ubuntu/k3s.yaml
-   exit
-   ```
-
-4. **Get VM IP address**
-
-   ```bash
-   multipass info k3s-vm
-   ```
-
-   Note down the IP address for the next steps.
-
-5. **Transfer kubeconfig to your local machine**
-
-   ```bash
-   multipass transfer k3s-vm:/home/ubuntu/k3s.yaml ~/.kube/config
-   ```
-
-6. **Edit kubeconfig for remote access**
-   Open `~/.kube/config` and modify the cluster configuration:
-
-   ```yaml
-   clusters:
-     - cluster:
-         # certificate-authority-data: LS0tL...    ←❌ Remove this line
-         server: https://<vm-ip>:6443      ←✅ Replace with your VM IP
-         insecure-skip-tls-verify: true            ←✅ Add this line
-   ```
-
-7. **Verify connection**
-   ```bash
-   kubectl get nodes
-   ```
-   You should see your K3s node listed as "Ready".
-
-### Local Git Repository Setup (Optional) 🌳
-
-For development without pushing to remote repositories:
-
-1. **Start Git daemon (run from parent directory)**
-
-   ```bash
-   cd ..
-   git daemon --reuseaddr --base-path=. --export-all --verbose
-   ```
-
-2. **Repository access**
-   - Repository URL: `git://<ip-address>/cicd`
-   - Test with: `git clone git://<ip-address>/cicd`
+   After first login, change the admin password immediately.

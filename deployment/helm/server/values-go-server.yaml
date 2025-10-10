@@ -1,0 +1,24 @@
+fullnameOverride: go-server
+
+image:
+  repository: squishmeist/go-server
+  tag: latest
+
+app:
+  label: go-server
+
+ingress:
+  hosts:
+    - host: go.squishmeist.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: go-server-tls
+      hosts:
+        - go.squishmeist.com
+
+certificate:
+  commonName: go.squishmeist.com
+  dnsNames:
+    - go.squishmeist.com

@@ -1,0 +1,33 @@
+{{- $fullname := include "server.fullname" . -}}
+{{- $certName := .Values.certificate.name | default (printf "%s-cert" $fullname) -}}
+{{- $secretName := .Values.certificate.secretName | default (printf "%s-tls" $fullname) -}}
+{{- if .Values.certificate.enabled }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ $certName }}
+  {{- if .Values.certificate.namespace }}
+  namespace: {{ .Values.certificate.namespace }}
+  {{- end }}
+  labels:
+    {{- include "server.labels" . | nindent 4 }}
+spec:
+  secretName: {{ $secretName }}
+  duration: {{ .Values.certificate.duration }}
+  renewBefore: {{ .Values.certificate.renewBefore }}
+  commonName: {{ .Values.certificate.commonName }}
+  dnsNames:
+    {{- range .Values.certificate.dnsNames }}
+    - {{ . }}
+    {{- end }}
+  issuerRef:
+    name: {{ .Values.certificate.issuerRef.name }}
+    kind: {{ .Values.certificate.issuerRef.kind }}
+  privateKey:
+    algorithm: {{ .Values.certificate.privateKey.algorithm }}
+    size: {{ .Values.certificate.privateKey.size }}
+  usages:
+    {{- range .Values.certificate.usages }}
+    - {{ . }}
+    {{- end }}
+{{- end }}

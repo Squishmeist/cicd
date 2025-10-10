@@ -8,7 +8,11 @@ spec:
   source:
     repoURL: https://github.com/squishmeist/cicd.git
     targetRevision: main
-    path: deployment/blink-server
+    path: deployment/helm/server
+    helm:
+      releaseName: blink-server
+      valueFiles:
+        - values-blink-server.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: default
