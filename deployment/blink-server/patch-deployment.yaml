@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server
+spec:
+  selector:
+    matchLabels:
+      app: blink-server
+  template:
+    metadata:
+      labels:
+        app: blink-server
+    spec:
+      volumes:
+        - name: server-certs
+          secret:
+            secretName: blink-server-tls

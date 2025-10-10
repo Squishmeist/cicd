@@ -1,13 +1,12 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: go-server-ingress
-  namespace: default
+  name: server-ingress
 spec:
   tls:
-    - hosts:
+    - secretName: go-server-tls
+      hosts:
         - go.squishmeist.com
-      secretName: go-server-tls
   rules:
     - host: go.squishmeist.com
       http:
@@ -16,6 +15,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: go-server-service
+                name: server-service
                 port:
                   number: 80

@@ -1,15 +1,15 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: go-server-cert
+  name: server-cert
   namespace: default
 spec:
-  secretName: go-server-tls
+  secretName: server-tls
   duration: 2160h # 90d
   renewBefore: 360h
-  commonName: go.squishmeist.com
+  commonName: app.example.com
   dnsNames:
-    - go.squishmeist.com
+    - app.example.com
   issuerRef:
     name: squishmeist-ca
     kind: ClusterIssuer

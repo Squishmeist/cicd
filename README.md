@@ -93,7 +93,7 @@ If you prefer to use a remote server instead of a local VM, follow these steps t
    ```
 
 3. **Set up SSH tunnel for secure access**
-   
+
    ```bash
    # Create SSH tunnel in background (keeps running)
    ssh -f -N -L 6443:localhost:6443 root@<server-ip>
@@ -139,7 +139,7 @@ kubectl get nodes
 2. **Deploy to Kubernetes**
 
    ```bash
-   kubectl apply -f deployment/go-server
+   kubectl apply -k deployment/go-server
    ```
 
 3. **Verify deployment**
@@ -156,6 +156,9 @@ kubectl get nodes
 1. **Verify ArgoCD installation**
 
    ```bash
+   # Apply configuration
+   kubectl apply -f deployment/argo
+
    # Get initial password
    kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
    ```
