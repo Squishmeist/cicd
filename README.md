@@ -18,15 +18,15 @@ Make sure you have the following tools installed:
 
 ### ✅ Required (should already be installed)
 
-- **Git** - Version control
-- **Go** - Go programming language
-- **Helm** - Kubernetes package manager
+- **Git** - A distributed version control system for tracking changes in source code.
+- **Go** - The Go programming language, used for building the application.
+- **Terraform** - Infrastructure as Code (IaC) tool for managing cloud resources.
+- **Helm** - A Kubernetes package manager for deploying and managing applications.
 
 ### 🔧 Additional Tools
 
 - **Docker** ([Install Guide](https://docs.docker.com/get-docker/)) - Container runtime
 - **kubectl** ([Install Guide](https://kubernetes.io/docs/tasks/tools/)) - Kubernetes CLI
-- **Multipass** ([Install Guide](https://multipass.run/install)) - Optional Ubuntu VM manager for Linux/macOS/Windows
 - **ArgoCD** - GitOps continuous delivery tool (installed via Kubernetes)
 
 ## 📁 Project Structure
@@ -59,17 +59,44 @@ If you prefer to use a remote server instead of a local VM, follow these steps t
 
 #### 2. Configure Local Access
 
-1. **Set up SSH tunnel for secure access**
+1. **Set Up SSH Key**
+
+   To enable passwordless SSH access, follow these steps:
+
+   **Option 1: Use `ssh-copy-id`**
 
    ```bash
-   # Create SSH tunnel in background (keeps running)
-   ssh -f -N -L 6443:localhost:6443 root@<server-ip>
+   ssh-copy-id -i ~/.ssh/id_ed25519.pub root@<server-ip>
+   ```
+
+   This command automatically appends your public key to the `~/.ssh/authorized_keys` file on the remote server.
+
+   **Option 2: Manually Copy the Public Key**
+
+   ```bash
+   # Display your public SSH key
+   cat ~/.ssh/id_ed25519.pub
+
+   # Connect to the remote server
+   ssh root@<server-ip>
+
+   # Open the authorized_keys file on the server
+   nano ~/.ssh/authorized_keys
+
+   # Paste the public key into the file, save, and exit
    ```
 
 2. **Copy K3s config to your local machine**
 
    ```bash
    scp root@<server-ip>:/etc/rancher/k3s/k3s.yaml ~/.kube/server-k3s.yaml
+   ```
+
+3. **Set up SSH tunnel for secure access**
+   
+   ```bash
+   # Create SSH tunnel in background (keeps running)
+   ssh -f -N -L 6443:localhost:6443 root@<server-ip>
    ```
 
 #### 3. Test Local Connection
@@ -148,7 +175,7 @@ kubectl get nodes
    - **Path**: `./deployment/go-server`
    - **Destination**: `https://kubernetes.default.svc` / `default` namespace
 
-### 🖥️ Local VM
+### 🖥️ Local VM (Optional)
 
 1. **Install Multipass** (if not already installed)
 
