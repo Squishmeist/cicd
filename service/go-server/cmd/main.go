@@ -1,14 +1,9 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/redis/go-redis/v9"
@@ -28,7 +23,6 @@ func main() {
 		Password: cfg.Redis.Password,
 		DB:       cfg.Redis.DB,
 	})
-	defer rdb.Close()
 
 	e := echo.New()
 	handler := &goServer.Handler{
@@ -45,31 +39,13 @@ func main() {
 	e.GET("/docs", docsHandler)
 	e.GET("/docs/*", docsHandler)
 
-	fmt.Println("Starting server on :8080")
-	startServer(e)
-}
-
-func startServer(e *echo.Echo) {
-	// Graceful shutdown handling
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-
 	server := &http.Server{
 		Addr:    ":8080",
 		Handler: e,
 	}
 
-	go func() {
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("echo server error: %v", err)
-		}
-	}()
-
-	<-quit
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	if err := server.Shutdown(ctx); err != nil {
-		log.Printf("error during server shutdown: %v", err)
+	fmt.Println("Starting server on :8080")
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("echo server error: %v", err)
 	}
 }

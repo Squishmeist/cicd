@@ -87,16 +87,3 @@ container:
 secret:
   enabled: true
   name: ""
-
-networkPolicy:
-  enabled: true
-  allowSameNamespaceIngress: true
-  allowedIngressNamespaces:
-    - kube-system
-  allowDnsEgress: true
-  allowInternetEgress:
-    - 80
-    - 443
-  allowNtpEgress: true
-  extraIngressRules: []
-  extraEgressRules: []
