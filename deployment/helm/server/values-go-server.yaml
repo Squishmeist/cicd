@@ -22,3 +22,15 @@ certificate:
   commonName: go.squishmeist.com
   dnsNames:
     - go.squishmeist.com
+
+appConfig:
+  name: app-config
+  data: |-
+    redis:
+      addr: redis-master.redis.svc.cluster.local:6379
+      password: 4cOoERyA0q
+      db: 0
+    database:
+      DRIVER: "sqlite3"
+      PROTOCOL: "file"
+      ADDR: "./local.db"

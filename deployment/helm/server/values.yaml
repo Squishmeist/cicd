@@ -35,6 +35,11 @@ service:
   port: 80
   targetPort: 8080
 
+appConfig:
+  name: app-config
+  mountPath: /etc/conf/config.yaml
+  key: config.yaml
+
 ingress:
   enabled: true
   className: ""
@@ -68,16 +73,6 @@ certificate:
   usages:
     - server auth
 
-configMap:
-  enabled: true
-  name: ""
-  data:
-    config.yaml: |
-      redis:
-        addr: redis-master.redis.svc.cluster.local:6379
-        password: tWDlVCLsV5%
-        db: 0
-
 app:
   label: server
 
@@ -92,10 +87,6 @@ container:
 secret:
   enabled: true
   name: ""
-
-nodeSelector: {}
-tolerations: []
-affinity: {}
 
 networkPolicy:
   enabled: true

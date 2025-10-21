@@ -1,96 +1,59 @@
 {{- $fullname := include "server.fullname" . -}}
-{{- $configMapName := .Values.configMap.name | default (printf "%s-config" $fullname) -}}
 {{- $secretName := "" -}}
 {{- if .Values.secret.enabled -}}
-{{- $secretName = default (printf "%s-tls" $fullname) .Values.secret.name -}}
+  {{- $secretName = default (printf "%s-tls" $fullname) .Values.secret.name -}}
 {{- end -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ $fullname }}
   labels:
-    {{- include "server.labels" . | nindent 4 }}
+  {{ include "server.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "server.selectorLabels" . | nindent 6 }}
+  {{ include "server.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "server.selectorLabels" . | nindent 8 }}
-        {{- if .Values.podLabels }}
-        {{- toYaml .Values.podLabels | nindent 8 }}
-        {{- end }}
+  {{ include "server.selectorLabels" . | nindent 8 }}
+          {{ if .Values.podLabels }}
+            {{ toYaml .Values.podLabels | nindent 8 }}
+          {{ end }}
     spec:
-      {{- if .Values.image.pullSecrets }}
+{{- if .Values.image.pullSecrets }}
       imagePullSecrets:
-        {{- toYaml .Values.image.pullSecrets | nindent 8 }}
-      {{- end }}
-      {{- if .Values.serviceAccount.create }}
-      serviceAccountName: {{ default (include "server.fullname" .) .Values.serviceAccount.name }}
-      {{- else if .Values.serviceAccount.name }}
-      serviceAccountName: {{ .Values.serviceAccount.name }}
-      {{- end }}
-      {{- if .Values.podSecurityContext }}
-      securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      {{- end }}
+{{ toYaml .Values.image.pullSecrets | nindent 8 }}
+{{- end }}
       containers:
         - name: {{ .Values.container.name | default "server" }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.container.port }}
-          {{- if or .Values.configMap.enabled (and .Values.secret.enabled $secretName) }}
           volumeMounts:
-            {{- if .Values.configMap.enabled }}
-            - name: config-volume
-              mountPath: {{ .Values.container.configMountPath }}
-              subPath: {{ .Values.container.configSubPath }}
+            - name: app-config
+              mountPath: {{ .Values.appConfig.mountPath }}
+              subPath: {{ .Values.appConfig.key }}
               readOnly: true
-            {{- end }}
-            {{- if and .Values.secret.enabled $secretName }}
-            - name: server-certs
-              mountPath: {{ .Values.container.certsMountPath }}
-              readOnly: true
-            {{- end }}
-          {{- end }}
-          {{- if .Values.securityContext }}
           securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
-          {{- end }}
-          {{- if .Values.container.resources }}
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+{{- if .Values.securityContext }}
+{{ toYaml .Values.securityContext | nindent 12 }}
+{{- end }}
+{{- if .Values.container.resources }}
           resources:
-            {{- toYaml .Values.container.resources | nindent 12 }}
-          {{- end }}
-      {{- if or .Values.configMap.enabled (and .Values.secret.enabled $secretName) }}
+{{ toYaml .Values.container.resources | nindent 10 }}
+{{- end }}
       volumes:
-        {{- if .Values.configMap.enabled }}
-        - name: config-volume
-          configMap:
-            name: {{ $configMapName }}
-            {{- if .Values.container.configSubPath }}
-            items:
-              - key: {{ .Values.container.configSubPath }}
-                path: {{ .Values.container.configSubPath }}
-            {{- end }}
-        {{- end }}
-        {{- if and .Values.secret.enabled $secretName }}
-        - name: server-certs
+        - name: app-config
           secret:
-            secretName: {{ $secretName }}
-        {{- end }}
-      {{- end }}
-      {{- if .Values.nodeSelector }}
-      nodeSelector:
-        {{- toYaml .Values.nodeSelector | nindent 8 }}
-      {{- end }}
-      {{- if .Values.tolerations }}
-      tolerations:
-        {{- toYaml .Values.tolerations | nindent 8 }}
-      {{- end }}
-      {{- if .Values.affinity }}
-      affinity:
-        {{- toYaml .Values.affinity | nindent 8 }}
-      {{- end }}
+            secretName: {{ .Values.appConfig.name }}
+            items:
+              - key: {{ .Values.appConfig.key }}
+                path: {{ .Values.appConfig.key }}
